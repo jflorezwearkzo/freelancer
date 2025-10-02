@@ -39,12 +39,19 @@ jobs:
           NODE_ENV: production
           
       - name: Add .nojekyll file
-        run: touch ./dist/.nojekyll
+        run: touch ./out/.nojekyll
+        
+      - name: List build output (debug)
+        run: |
+          echo "Contents of out directory:"
+          ls -la ./out/
+          echo "Contents of out/_next directory:"
+          ls -la ./out/_next/ || echo "No _next directory found"
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./out
 
   deploy:
     environment:
