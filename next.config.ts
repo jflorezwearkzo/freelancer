@@ -8,9 +8,8 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true
   },
-  // Remover basePath para GitHub Pages
-  // basePath: process.env.NODE_ENV === 'production' ? '/freelancer' : '',
-  // assetPrefix: process.env.NODE_ENV === 'production' ? '/freelancer' : '',
+  basePath: process.env.NODE_ENV === 'production' ? '/freelancer' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/freelancer' : '',
   eslint: {
     ignoreDuringBuilds: true,
   },
