@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useAuth } from '@/contexts/AuthContext';
+import { loadDemoData, hasData } from '@/lib/storage';
 
 export const AuthForm: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -37,6 +38,11 @@ export const AuthForm: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadDemo = () => {
+    loadDemoData();
+    window.location.reload();
   };
 
   return (
@@ -114,17 +120,37 @@ export const AuthForm: React.FC = () => {
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-600 hover:text-blue-800 text-sm"
-            >
-              {isLogin 
-                ? '¿No tienes cuenta? Regístrate aquí' 
-                : '¿Ya tienes cuenta? Inicia sesión'
-              }
-            </button>
+          <div className="mt-4 space-y-3">
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-blue-600 hover:text-blue-800 text-sm"
+              >
+                {isLogin 
+                  ? '¿No tienes cuenta? Regístrate aquí' 
+                  : '¿Ya tienes cuenta? Inicia sesión'
+                }
+              </button>
+            </div>
+            
+            <div className="border-t pt-3">
+              <div className="text-center mb-2">
+                <span className="text-xs text-gray-500">¿Quieres probar la aplicación?</span>
+              </div>
+              <Button
+                type="button"
+                onClick={handleLoadDemo}
+                variant="outline"
+                className="w-full text-sm"
+                disabled={loading}
+              >
+                🚀 Cargar Datos de Demostración
+              </Button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Incluye proyectos, clientes y tareas de ejemplo
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

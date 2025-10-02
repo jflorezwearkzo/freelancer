@@ -1,4 +1,5 @@
 import { AppData, User, Client, Project, Task, Quote, Contract, TeamMember } from './types';
+import { demoData } from './demoData';
 
 const STORAGE_KEY = 'freelancer_app_data';
 
@@ -312,4 +313,34 @@ export const updateContract = (id: string, updates: Partial<Contract>): Contract
   
   saveData(data);
   return data.contracts[index];
+};
+
+// Función para cargar datos de demostración
+export const loadDemoData = (): void => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(demoData));
+    localStorage.setItem('current_user', JSON.stringify({
+      ...demoData.users[0],
+      password: '' // No devolver la contraseña
+    }));
+  } catch (error) {
+    console.error('Error loading demo data:', error);
+  }
+};
+
+// Función para verificar si hay datos
+export const hasData = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) return false;
+  
+  try {
+    const data = JSON.parse(stored);
+    return data.users && data.users.length > 0;
+  } catch {
+    return false;
+  }
 };
