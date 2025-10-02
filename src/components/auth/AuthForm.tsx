@@ -17,6 +17,11 @@ export const AuthForm: React.FC = () => {
 
   const { login, register } = useAuth();
 
+  // Debug log para GitHub Pages
+  React.useEffect(() => {
+    console.log('AuthForm mounted successfully');
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
