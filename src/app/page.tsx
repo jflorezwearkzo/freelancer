@@ -1,113 +1,239 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { loginUser, registerUser, setCurrentUser } from '@/lib/auth';
+import { loadDemoData, hasData } from '@/lib/storage';
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    console.log('Home component mounted');
-    setMounted(true);
-    
-    // Verificar si hay usuario en localStorage
-    try {
-      const currentUser = localStorage.getItem('current_user');
-      if (currentUser) {
-        setUser(JSON.parse(currentUser));
-        router.push('/dashboard');
-      }
-    } catch (error) {
-      console.log('No user found');
+    // Verificar si ya está logueado
+    const currentUser = localStorage.getItem('current_user');
+    if (currentUser) {
+      router.push('/dashboard');
     }
   }, [router]);
 
-  const loadDemoData = () => {
-    console.log('Loading demo data...');
-    
-    // Datos de demo simplificados
-    const demoUser = {
-      id: 'demo-user-1',
-      email: 'demo@freelancerpro.com',
-      name: 'Usuario Demo',
-      role: 'freelancer'
-    };
-
-    // Datos de demo básicos
-    const demoData = {
-      users: [demoUser],
-      clients: [
-        {
-          id: 'client-1',
-          name: 'Tech Startup Inc.',
-          email: 'contact@techstartup.com',
-          company: 'Tech Startup Inc.',
-          status: 'active',
-          userId: 'demo-user-1'
-        }
-      ],
-      projects: [
-        {
-          id: 'project-1',
-          name: 'Aplicación Móvil FinTech',
-          description: 'Desarrollo de app móvil para finanzas',
-          status: 'active',
-          progress: 65,
-          budget: 15000,
-          userId: 'demo-user-1',
-          clientId: 'client-1'
-        }
-      ],
-      tasks: [],
-      quotes: [],
-      contracts: [],
-      teamMembers: []
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
-      localStorage.setItem('freelancer_app_data', JSON.stringify(demoData));
-      localStorage.setItem('current_user', JSON.stringify(demoUser));
-      window.location.reload();
-    } catch (error) {
-      console.error('Error loading demo data:', error);
+      if (isLogin) {
+        const result = await loginUser(email, password);
+        if (result.success && result.user) {
+          setCurrentUser(result.user);
+          router.push('/dashboard');
+        } else {
+          setError(result.error || 'Credenciales inválidas');
+        }
+      } else {
+        const result = await registerUser(email, password, name);
+        if (result.success && result.user) {
+          setCurrentUser(result.user);
+          router.push('/dashboard');
+        } else {
+          setError(result.error || 'Error al crear la cuenta');
+        }
+      }
+    } catch (err) {
+      setError('Error inesperado. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const handleLoadDemo = async () => {
+    loadDemoData();
+    // Login con usuario demo
+    const result = await loginUser('admin@freelancer.com', 'admin123');
+    if (result.success && result.user) {
+      setCurrentUser(result.user);
+      router.push('/dashboard');
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-sm border p-6">
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-gray-900">FreelancerPro</h1>
-          <p className="text-gray-600">Sistema de Gestión para Freelancers</p>
-          
-          <div className="space-y-4">
-            <button
-              onClick={loadDemoData}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              🚀 Cargar Datos de Demostración
-            </button>
-            
-            <p className="text-xs text-gray-500">
-              Incluye proyectos, clientes y tareas de ejemplo
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900">
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 z-10">
+        <nav className="flex items-center justify-between p-6">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <span className="text-blue-900 font-bold text-lg">F</span>
+            </div>
+            <span className="text-white font-bold text-xl">FreelancerPro</span>
           </div>
+          <div className="text-white/80 text-sm">
+            Sistema de Gestión para Freelancers
+          </div>
+        </nav>
+      </div>
 
-          <div className="mt-6 text-xs text-gray-400">
-            <p>✅ Aplicación cargada correctamente</p>
-            <p>✅ JavaScript funcionando</p>
-            <p>✅ LocalStorage disponible</p>
+      <div className="flex items-center justify-center min-h-screen pt-20">
+        <div className="w-full max-w-6xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            
+            {/* Left side - Info */}
+            <div className="text-white space-y-8">
+              <div>
+                <h1 className="text-5xl font-bold mb-4">
+                  Gestiona tu negocio
+                  <span className="text-blue-300"> como un profesional</span>
+                </h1>
+                <p className="text-xl text-blue-100 mb-8">
+                  Organiza proyectos, clientes, tareas y contratos en una sola plataforma. 
+                  Inspirado en el sistema de Jose Freelancer.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <span className="text-2xl">📊</span>
+                  </div>
+                  <h3 className="font-semibold">Dashboard Inteligente</h3>
+                  <p className="text-sm text-blue-200">Métricas y estadísticas en tiempo real</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <span className="text-2xl">👥</span>
+                  </div>
+                  <h3 className="font-semibold">CRM Completo</h3>
+                  <p className="text-sm text-blue-200">Gestiona clientes y prospectos</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <span className="text-2xl">📁</span>
+                  </div>
+                  <h3 className="font-semibold">Proyectos</h3>
+                  <p className="text-sm text-blue-200">Organiza y da seguimiento</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <span className="text-2xl">💰</span>
+                  </div>
+                  <h3 className="font-semibold">Cotizaciones</h3>
+                  <p className="text-sm text-blue-200">Plantillas profesionales</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right side - Form */}
+            <div className="bg-white rounded-2xl shadow-2xl p-8">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+                </h2>
+                <p className="text-gray-600">
+                  {isLogin 
+                    ? 'Accede a tu panel de control' 
+                    : 'Únete y organiza tu negocio'
+                  }
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {!isLogin && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nombre completo
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="Tu nombre completo"
+                      required
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="tu@email.com"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Procesando...' : (isLogin ? 'Iniciar Sesión' : 'Crear Cuenta')}
+                </button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  {isLogin 
+                    ? '¿No tienes cuenta? Regístrate' 
+                    : '¿Ya tienes cuenta? Inicia sesión'
+                  }
+                </button>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={handleLoadDemo}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                >
+                  🚀 Probar con Datos de Demostración
+                </button>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Explora la plataforma con datos de ejemplo
+                </p>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-0 left-0 right-0 p-6">
+        <div className="text-center text-white/60 text-sm">
+          © 2024 FreelancerPro - Inspirado en el sistema de Jose Freelancer
         </div>
       </div>
     </div>
